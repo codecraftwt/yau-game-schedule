@@ -48,7 +48,7 @@ const Sidebar = ({ organizations, selectedOrg, onSelectOrg, mobileOpen, onClose,
           YAU
         </Typography>
         <Typography variant="caption" sx={{ color: '#f0f9ff', display: 'block' }}>
-          Young Athlete University
+          Youth Athlete University
         </Typography>
         <Typography
           variant="body2"

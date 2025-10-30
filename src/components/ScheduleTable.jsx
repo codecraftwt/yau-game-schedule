@@ -16,12 +16,36 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
-const ScheduleTable = ({ org, ageGroup, onBack }) => {
+const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
   const [tab, setTab] = useState("upcoming");
   const isMobile = useMediaQuery("(max-width:600px)");
   const now = new Date();
 
-  const games = org.games.filter((g) => g.ageGroup === ageGroup);
+  // Filter games for this organization, sport, and age group
+  const games = schedules.filter(game => {
+    const isOrgGame = game.team1.orgName === org.name || game.team2.orgName === org.name;
+    const isSportMatch = game.team1.sport === sport;
+    const isAgeGroupMatch = game.team1.ageGroup === ageGroup || game.team2.ageGroup === ageGroup;
+    return isOrgGame && isSportMatch && isAgeGroupMatch;
+  });
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Format time for display
+  const formatTime = (timeString) => {
+    return timeString; // API already provides formatted time like "09:00 AM"
+  };
+
+  // Separate upcoming and completed games
   const upcoming = games.filter((g) => new Date(g.date) >= now);
   const completed = games.filter((g) => new Date(g.date) < now);
   const displayed = tab === "upcoming" ? upcoming : completed;
@@ -34,7 +58,7 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
         color="text.secondary"
         sx={{ mb: 0.5, fontSize: { xs: "0.8rem", md: "0.9rem" } }}
       >
-        Dashboard / {org.name} / {ageGroup}
+        Dashboard / {org.name} / {sport.replace('_', ' ')} / {ageGroup}
       </Typography>
 
       {/* Title */}
@@ -42,7 +66,7 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
         variant="h5"
         sx={{ mt: 1, fontSize: { xs: "1.25rem", md: "1.5rem" } }}
       >
-        Game Schedule
+        {sport.replace('_', ' ')} - {ageGroup} Schedule
       </Typography>
 
       {/* Subtext */}
@@ -65,17 +89,17 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
           "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
         }}
       >
-        <Tab label="Upcoming" value="upcoming" />
-        <Tab label="Completed" value="completed" />
+        <Tab label={`Upcoming (${upcoming.length})`} value="upcoming" />
+        <Tab label={`Completed (${completed.length})`} value="completed" />
       </Tabs>
 
       {/* MOBILE VIEW - CARD LIST */}
       {isMobile ? (
         <Box>
           {displayed.length > 0 ? (
-            displayed.map((g) => (
+            displayed.map((game) => (
               <Card
-                key={g.id}
+                key={game.id}
                 sx={{
                   mb: 2,
                   borderRadius: 2,
@@ -88,19 +112,22 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
                     variant="subtitle1"
                     sx={{ fontWeight: 600, color: "#1e3a8a" }}
                   >
-                    {g.matchup}
+                    {game.matchup}
                   </Typography>
                   <Typography sx={{ fontSize: "0.9rem" }}>
-                    📅 <strong>Date:</strong> {g.date}
+                    🏀 <strong>Sport:</strong> {game.team1.sport}
                   </Typography>
                   <Typography sx={{ fontSize: "0.9rem" }}>
-                    ⏰ <strong>Time:</strong> {g.time}
+                    📅 <strong>Date:</strong> {formatDate(game.date)}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.9rem" }}>
+                    ⏰ <strong>Time:</strong> {formatTime(game.time)}
                   </Typography>
                   <Typography sx={{ fontSize: "0.9rem" }}>
                     📍{" "}
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        g.location
+                        game.location
                       )}`}
                       target="_blank"
                       rel="noreferrer"
@@ -110,10 +137,10 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
                         fontWeight: 500,
                       }}
                     >
-                      {g.location}
+                      {game.location}
                     </a>
                   </Typography>
-                  {g.notes && (
+                  {game.notes && (
                     <Typography
                       sx={{
                         fontSize: "0.85rem",
@@ -122,7 +149,7 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
                         fontStyle: "italic",
                       }}
                     >
-                      📝 {g.notes}
+                      📝 {game.notes}
                     </Typography>
                   )}
                 </CardContent>
@@ -133,7 +160,7 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
               variant="body2"
               sx={{ textAlign: "center", py: 3, color: "#6b7280" }}
             >
-              No games scheduled yet for {org.name} {ageGroup}.
+              No {tab} games found for {org.name} {ageGroup}.
             </Typography>
           )}
         </Box>
@@ -163,6 +190,7 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
             <TableHead>
               <TableRow>
                 <TableCell>Matchup</TableCell>
+                <TableCell>Sport</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Time</TableCell>
                 <TableCell>Location</TableCell>
@@ -171,22 +199,23 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
             </TableHead>
             <TableBody>
               {displayed.length > 0 ? (
-                displayed.map((g) => (
+                displayed.map((game) => (
                   <TableRow
-                    key={g.id}
+                    key={game.id}
                     hover
                     sx={{
                       "&:hover": { backgroundColor: "#f9fafb" },
                       transition: "background 0.2s ease",
                     }}
                   >
-                    <TableCell sx={{ minWidth: 120 }}>{g.matchup}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{g.date}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{g.time}</TableCell>
+                    <TableCell sx={{ minWidth: 120 }}>{game.matchup}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>{game.team1.sport}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(game.date)}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>{formatTime(game.time)}</TableCell>
                     <TableCell sx={{ minWidth: 140 }}>
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          g.location
+                          game.location
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -196,16 +225,16 @@ const ScheduleTable = ({ org, ageGroup, onBack }) => {
                           fontWeight: 500,
                         }}
                       >
-                        {g.location}
+                        {game.location}
                       </a>
                     </TableCell>
-                    <TableCell sx={{ minWidth: 200 }}>{g.notes}</TableCell>
+                    <TableCell sx={{ minWidth: 200 }}>{game.notes}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} sx={{ textAlign: "center", py: 4 }}>
-                    No games scheduled yet for {org.name} {ageGroup}.
+                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                    No {tab} games found for {org.name} {ageGroup}.
                   </TableCell>
                 </TableRow>
               )}
