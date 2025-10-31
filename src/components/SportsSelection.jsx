@@ -1,6 +1,7 @@
 // src/components/SportsSelection.jsx
-import { Box, Card, CardActionArea, Typography, Grid } from '@mui/material';
+import { Box, Card, CardActionArea, Typography, Grid, Button } from '@mui/material';
 import React from 'react';
+import { ArrowBack } from '@mui/icons-material';
 
 // Sport icons or images (you can replace these with actual images)
 const sportImages = {
@@ -11,19 +12,58 @@ const sportImages = {
   Cheer: '📣'
 };
 
-const SportsSelection = ({ org, onSelectSport }) => {
-  if (!org || !org.sports) return null;
-
-  const sports = Object.keys(org.sports);
+const SportsSelection = ({ org, ageGroup, sports, onSelectSport, onBack }) => {
+  if (!org || !sports || sports.length === 0) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 4 } }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={onBack}
+          sx={{ 
+            mb: 2,
+            textTransform: 'none',
+            color: 'text.secondary'
+          }}
+        >
+          Back to Age Groups
+        </Button>
+        
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+          No Sports Available
+        </Typography>
+        
+        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+          No sports found for {org?.name} in the {ageGroup} age group.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
+      {/* Back Button and Breadcrumb */}
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={onBack}
+        sx={{ 
+          mb: 2,
+          textTransform: 'none',
+          color: 'text.secondary'
+        }}
+      >
+        Back to Age Groups
+      </Button>
+      
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        Dashboard / {org.name} / {ageGroup}
+      </Typography>
+
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-        Welcome to YAU TeamUp
+        Select Sport
       </Typography>
       
       <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-        Select your child's sport for <strong>{org.name}</strong> to view their team and game schedule.
+        Choose a sport for <strong>{ageGroup}</strong> in <strong>{org.name}</strong> to view the game schedule.
       </Typography>
 
       {/* Sports Grid */}
@@ -71,7 +111,7 @@ const SportsSelection = ({ org, onSelectSport }) => {
                     color="text.secondary"
                     sx={{ mb: 2 }}
                   >
-                    {org.sports[sport].divisions.length} age group(s) available
+                    {ageGroup} Division
                   </Typography>
                   <Typography 
                     variant="body2" 
@@ -99,60 +139,12 @@ const SportsSelection = ({ org, onSelectSport }) => {
             <strong>Select your child's sport</strong> from the options above
           </Typography>
           <Typography component="li" variant="body1" sx={{ mb: 1 }}>
-            <strong>Choose your child's age group</strong> from the available divisions
+            <strong>View the complete game schedule</strong> including dates, times, and locations
           </Typography>
           <Typography component="li" variant="body1">
-            <strong>View practice times, game schedules, and locations</strong>
+            <strong>Track your child's games and practices</strong> throughout the season
           </Typography>
         </Box>
-      </Box>
-
-      {/* Quick Access Buttons */}
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <Card 
-          sx={{ 
-            borderRadius: 2,
-            cursor: 'pointer',
-            '&:hover': { backgroundColor: 'action.hover' }
-          }}
-        >
-          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography>📅</Typography>
-            <Typography variant="body2" fontWeight={500}>
-              Full Game Calendar
-            </Typography>
-          </Box>
-        </Card>
-        
-        <Card 
-          sx={{ 
-            borderRadius: 2,
-            cursor: 'pointer',
-            '&:hover': { backgroundColor: 'action.hover' }
-          }}
-        >
-          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography>📍</Typography>
-            <Typography variant="body2" fontWeight={500}>
-              Game Day Locations
-            </Typography>
-          </Box>
-        </Card>
-        
-        <Card 
-          sx={{ 
-            borderRadius: 2,
-            cursor: 'pointer',
-            '&:hover': { backgroundColor: 'action.hover' }
-          }}
-        >
-          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography>👤</Typography>
-            <Typography variant="body2" fontWeight={500}>
-              Parent Resources
-            </Typography>
-          </Box>
-        </Card>
       </Box>
     </Box>
   );

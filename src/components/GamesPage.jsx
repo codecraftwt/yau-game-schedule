@@ -3,19 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { Box, AppBar, Toolbar, IconButton, Typography, useMediaQuery, CircularProgress } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sidebar from './Sidebar';
-import SportsSelection from './SportsSelection';
 import AgeGroups from './AgeGroups';
 import ScheduleTable from './ScheduleTable';
 import { api } from '../services/api';
+import HomePage from './HomePage';
 
 const GamesPage = () => {
   const [organizations, setOrganizations] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
-  const [selectedSport, setSelectedSport] = useState(null);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showHomepage, setShowHomepage] = useState(true);
 
   const isMobile = useMediaQuery('(max-width:900px)');
 
@@ -30,9 +30,6 @@ const GamesPage = () => {
 
         if (orgsResponse.success) {
           setOrganizations(orgsResponse.data);
-          if (orgsResponse.data.length > 0) {
-            setSelectedOrg(orgsResponse.data[0].name);
-          }
         }
 
         if (schedulesResponse.success) {
@@ -50,27 +47,69 @@ const GamesPage = () => {
 
   const org = organizations.find((o) => o.name === selectedOrg);
 
-  // Reset sport and age group when organization changes
-  const handleSelectOrg = (orgName) => {
-    setSelectedOrg(orgName);
-    setSelectedSport(null);
-    setSelectedAgeGroup(null);
+  // Get available age groups for selected organization
+  const getAvailableAgeGroups = () => {
+    if (!selectedOrg || !org || !org.sports) return [];
+    
+    // Collect all unique age groups from all sports in the organization
+    const allAgeGroups = new Set();
+    
+    Object.values(org.sports).forEach(sport => {
+      if (sport.divisions) {
+        sport.divisions.forEach(division => {
+          allAgeGroups.add(division.ageGroup);
+        });
+      }
+    });
+    
+    return Array.from(allAgeGroups).sort();
   };
 
-  // Reset age group when sport changes
-  const handleSelectSport = (sport) => {
-    setSelectedSport(sport);
+  // Get filtered schedules for table (now only by org and age group)
+  const getFilteredSchedules = () => {
+    if (!selectedOrg || !selectedAgeGroup) return [];
+    
+    return schedules.filter(schedule => {
+      const team1Match = 
+        schedule.team1?.orgName === selectedOrg &&
+        schedule.team1?.ageGroup === selectedAgeGroup;
+      
+      const team2Match = 
+        schedule.team2?.orgName === selectedOrg &&
+        schedule.team2?.ageGroup === selectedAgeGroup;
+      
+      return team1Match || team2Match;
+    });
+  };
+
+  // Reset when organization changes
+  const handleSelectOrg = (orgName) => {
+    setSelectedOrg(orgName);
     setSelectedAgeGroup(null);
+    setShowHomepage(false);
+  };
+
+  // Show homepage when ORGANIZATIONS header is clicked
+  const handleShowHomepage = () => {
+    setSelectedOrg(null);
+    setSelectedAgeGroup(null);
+    setShowHomepage(true);
+  };
+
+  // Handle age group selection
+  const handleSelectAgeGroup = (ageGroup) => {
+    setSelectedAgeGroup(ageGroup);
   };
 
   // Handle back navigation
-  const handleBackToSports = () => {
-    setSelectedSport(null);
+  const handleBackToAgeGroups = () => {
     setSelectedAgeGroup(null);
   };
 
-  const handleBackToAgeGroups = () => {
+  const handleBackToHomepage = () => {
+    setSelectedOrg(null);
     setSelectedAgeGroup(null);
+    setShowHomepage(true);
   };
 
   if (loading) {
@@ -87,6 +126,8 @@ const GamesPage = () => {
         organizations={organizations}
         selectedOrg={selectedOrg}
         onSelectOrg={handleSelectOrg}
+        onShowHomepage={handleShowHomepage}
+        showHomepage={showHomepage}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
         isMobile={isMobile}
@@ -119,29 +160,27 @@ const GamesPage = () => {
         )}
 
         <Box sx={{ mt: isMobile ? 8 : 0 }}>
-          {!selectedSport ? (
-            // Show Sports Selection (TeamUp Page)
-            <SportsSelection 
-              org={org} 
-              onSelectSport={handleSelectSport}
-            />
+          {showHomepage ? (
+            // Show Homepage Component
+            <HomePage />
+          ) : !selectedOrg ? (
+            // This shouldn't happen with the new flow, but as fallback
+            <HomePage />
           ) : !selectedAgeGroup ? (
-            // Show Age Groups for selected sport
+            // Show Age Groups for selected organization
             <AgeGroups
               org={org}
-              sport={selectedSport}
-              onSelectAgeGroup={setSelectedAgeGroup}
-              onBack={handleBackToSports}
-              schedules={schedules}
+              ageGroups={getAvailableAgeGroups()}
+              onSelectAgeGroup={handleSelectAgeGroup}
+              onBack={handleBackToHomepage}
             />
           ) : (
             // Show Schedule Table for selected age group
             <ScheduleTable
               org={org}
-              sport={selectedSport}
               ageGroup={selectedAgeGroup}
               onBack={handleBackToAgeGroups}
-              schedules={schedules}
+              schedules={getFilteredSchedules()}
             />
           )}
         </Box>

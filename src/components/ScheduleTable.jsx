@@ -16,17 +16,16 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 
-const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
+const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
   const [tab, setTab] = useState("upcoming");
   const isMobile = useMediaQuery("(max-width:600px)");
   const now = new Date();
 
-  // Filter games for this organization, sport, and age group
+  // Filter games for this organization and age group
   const games = schedules.filter(game => {
     const isOrgGame = game.team1.orgName === org.name || game.team2.orgName === org.name;
-    const isSportMatch = game.team1.sport === sport;
     const isAgeGroupMatch = game.team1.ageGroup === ageGroup || game.team2.ageGroup === ageGroup;
-    return isOrgGame && isSportMatch && isAgeGroupMatch;
+    return isOrgGame && isAgeGroupMatch;
   });
 
   // Format date for display
@@ -45,6 +44,11 @@ const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
     return timeString; // API already provides formatted time like "09:00 AM"
   };
 
+  // Get sport name from game (use team1's sport)
+  const getSportName = (game) => {
+    return game.team1?.sport || 'Unknown Sport';
+  };
+
   // Separate upcoming and completed games
   const upcoming = games.filter((g) => new Date(g.date) >= now);
   const completed = games.filter((g) => new Date(g.date) < now);
@@ -58,7 +62,7 @@ const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
         color="text.secondary"
         sx={{ mb: 0.5, fontSize: { xs: "0.8rem", md: "0.9rem" } }}
       >
-        Dashboard / {org.name} / {sport.replace('_', ' ')} / {ageGroup}
+        Dashboard / {org.name} / {ageGroup}
       </Typography>
 
       {/* Title */}
@@ -66,7 +70,7 @@ const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
         variant="h5"
         sx={{ mt: 1, fontSize: { xs: "1.25rem", md: "1.5rem" } }}
       >
-        {sport.replace('_', ' ')} - {ageGroup} Schedule
+        Game Schedule - {ageGroup}
       </Typography>
 
       {/* Subtext */}
@@ -115,7 +119,7 @@ const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
                     {game.matchup}
                   </Typography>
                   <Typography sx={{ fontSize: "0.9rem" }}>
-                    🏀 <strong>Sport:</strong> {game.team1.sport}
+                    🏀 <strong>Sport:</strong> {getSportName(game).replace('_', ' ')}
                   </Typography>
                   <Typography sx={{ fontSize: "0.9rem" }}>
                     📅 <strong>Date:</strong> {formatDate(game.date)}
@@ -209,7 +213,9 @@ const ScheduleTable = ({ org, sport, ageGroup, onBack, schedules }) => {
                     }}
                   >
                     <TableCell sx={{ minWidth: 120 }}>{game.matchup}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{game.team1.sport}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {getSportName(game).replace('_', ' ')}
+                    </TableCell>
                     <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(game.date)}</TableCell>
                     <TableCell sx={{ whiteSpace: "nowrap" }}>{formatTime(game.time)}</TableCell>
                     <TableCell sx={{ minWidth: 140 }}>

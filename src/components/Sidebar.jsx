@@ -11,7 +11,7 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 import React from 'react';
 
-const Sidebar = ({ organizations, selectedOrg, onSelectOrg, mobileOpen, onClose, isMobile }) => {
+const Sidebar = ({ organizations, selectedOrg, onSelectOrg, mobileOpen, onClose, isMobile, onShowHomepage, showHomepage }) => {
   const drawerContent = (
     <Box
       sx={{
@@ -59,20 +59,46 @@ const Sidebar = ({ organizations, selectedOrg, onSelectOrg, mobileOpen, onClose,
       </Box>
 
       {/* Organizations List */}
-      <Typography
-        variant="overline"
-        sx={{
-          px: 2,
-          py: 1,
-          color: '#e0f2fe',
-          letterSpacing: 0.5,
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        ORGANIZATIONS
-      </Typography>
+      <List sx={{ flexGrow: 1, p: 0 }}>
+        {/* Organizations Header Button - Now with same height and default selected state */}
+        <ListItemButton
+          onClick={() => {
+            onShowHomepage();
+            if (isMobile) onClose();
+          }}
+          sx={{
+            backgroundColor: showHomepage ? '#ffffff' : 'transparent',
+            color: showHomepage ? '#1e3a8a' : '#ffffff',
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            mt: 1,
+            minHeight: '48px', // Same height as other list items
+            '&:hover': {
+              backgroundColor: showHomepage ? '#f1f5f9' : 'rgba(255,255,255,0.15)',
+            },
+            transition: 'all 0.2s ease',
+            borderBottom: showHomepage ? 'none' : '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          <ListItemText
+            primary={
+              <Typography
+                variant="body2"
+                sx={{ 
+                  fontWeight: showHomepage ? 600 : 400,
+                  textTransform: 'uppercase',
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                ORGANIZATIONS
+              </Typography>
+            }
+          />
+        </ListItemButton>
 
-      <List sx={{ flexGrow: 1 }}>
+        {/* Organizations List Items */}
         {organizations.map((org) => (
           <ListItemButton
             key={org.name}
@@ -86,6 +112,7 @@ const Sidebar = ({ organizations, selectedOrg, onSelectOrg, mobileOpen, onClose,
               borderRadius: 1,
               mx: 1,
               mb: 0.5,
+              minHeight: '48px',
               '&:hover': {
                 backgroundColor:
                   selectedOrg === org.name ? '#f1f5f9' : 'rgba(255,255,255,0.15)',
