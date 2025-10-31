@@ -28,15 +28,22 @@ const GamesPage = () => {
           api.getSchedules()
         ]);
 
+        console.log('Organizations:', orgsResponse);
+        console.log('Schedules:', schedulesResponse);
+
         if (orgsResponse.success) {
           setOrganizations(orgsResponse.data);
         }
 
         if (schedulesResponse.success) {
           setSchedules(schedulesResponse.data);
+        } else {
+          console.warn('Schedules API returned unsuccessful:', schedulesResponse);
+          setSchedules([]);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+        setSchedules([]);
       } finally {
         setLoading(false);
       }
@@ -65,21 +72,32 @@ const GamesPage = () => {
     return Array.from(allAgeGroups).sort();
   };
 
-  // Get filtered schedules for table (now only by org and age group)
+  // Get filtered schedules for table
   const getFilteredSchedules = () => {
     if (!selectedOrg || !selectedAgeGroup) return [];
     
-    return schedules.filter(schedule => {
+    console.log('Filtering schedules for:', selectedOrg, selectedAgeGroup);
+    console.log('All schedules:', schedules);
+
+    const filtered = schedules.filter(schedule => {
+      // Check if schedule has the required structure (match data)
+      if (!schedule.team1 || !schedule.team2) {
+        return false;
+      }
+
       const team1Match = 
-        schedule.team1?.orgName === selectedOrg &&
-        schedule.team1?.ageGroup === selectedAgeGroup;
+        schedule.team1.orgName === selectedOrg &&
+        schedule.team1.ageGroup === selectedAgeGroup;
       
       const team2Match = 
-        schedule.team2?.orgName === selectedOrg &&
-        schedule.team2?.ageGroup === selectedAgeGroup;
+        schedule.team2.orgName === selectedOrg &&
+        schedule.team2.ageGroup === selectedAgeGroup;
       
       return team1Match || team2Match;
     });
+
+    console.log('Filtered schedules:', filtered);
+    return filtered;
   };
 
   // Reset when organization changes

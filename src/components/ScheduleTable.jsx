@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   useMediaQuery,
+  Alert,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -21,32 +22,41 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const now = new Date();
 
+  console.log("ScheduleTable - schedules:", schedules);
+
+  // Check if schedules array contains actual match data or organization data
+  const hasMatchStructure = schedules.length > 0 && schedules[0].team1 && schedules[0].team2;
+
   // Filter games for this organization and age group
-  const games = schedules.filter(game => {
+  const games = hasMatchStructure ? schedules.filter(game => {
     const isOrgGame = game.team1.orgName === org.name || game.team2.orgName === org.name;
     const isAgeGroupMatch = game.team1.ageGroup === ageGroup || game.team2.ageGroup === ageGroup;
     return isOrgGame && isAgeGroupMatch;
-  });
+  }) : [];
 
   // Format date for display
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString; // Return original if parsing fails
+    }
   };
 
   // Format time for display
   const formatTime = (timeString) => {
-    return timeString; // API already provides formatted time like "09:00 AM"
+    return timeString || 'Time TBD';
   };
 
-  // Get sport name from game (use team1's sport)
+  // Get sport name from game
   const getSportName = (game) => {
-    return game.team1?.sport || 'Unknown Sport';
+    return game.team1?.sport || 'Sport TBD';
   };
 
   // Separate upcoming and completed games
@@ -82,6 +92,14 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
         <span style={{ color: "#6b7280" }}>Upcoming matchups & notes</span>
       </Typography>
 
+      {/* Debug Info - Remove in production */}
+      {!hasMatchStructure && schedules.length > 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Debug: Received {schedules.length} items, but they don't appear to be match data. 
+          Please check the API response structure.
+        </Alert>
+      )}
+
       {/* Tabs */}
       <Tabs
         value={tab}
@@ -97,76 +115,79 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
         <Tab label={`Completed (${completed.length})`} value="completed" />
       </Tabs>
 
-      {/* MOBILE VIEW - CARD LIST */}
-      {isMobile ? (
+      {games.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+            No Games Scheduled
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            There are no {tab} games scheduled for {org.name} - {ageGroup} at this time.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Check back later for updates to the schedule.
+          </Typography>
+        </Box>
+      ) : isMobile ? (
+        // MOBILE VIEW - CARD LIST
         <Box>
-          {displayed.length > 0 ? (
-            displayed.map((game) => (
-              <Card
-                key={game.id}
-                sx={{
-                  mb: 2,
-                  borderRadius: 2,
-                  boxShadow:
-                    "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-                }}
-              >
-                <CardContent>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ fontWeight: 600, color: "#1e3a8a" }}
-                  >
-                    {game.matchup}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.9rem" }}>
-                    🏀 <strong>Sport:</strong> {getSportName(game).replace('_', ' ')}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.9rem" }}>
-                    📅 <strong>Date:</strong> {formatDate(game.date)}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.9rem" }}>
-                    ⏰ <strong>Time:</strong> {formatTime(game.time)}
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.9rem" }}>
-                    📍{" "}
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        game.location
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        color: "#2563eb",
-                        textDecoration: "none",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {game.location}
-                    </a>
-                  </Typography>
-                  {game.notes && (
-                    <Typography
-                      sx={{
-                        fontSize: "0.85rem",
-                        mt: 1,
-                        color: "#4b5563",
-                        fontStyle: "italic",
-                      }}
-                    >
-                      📝 {game.notes}
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Typography
-              variant="body2"
-              sx={{ textAlign: "center", py: 3, color: "#6b7280" }}
+          {displayed.map((game) => (
+            <Card
+              key={game.id}
+              sx={{
+                mb: 2,
+                borderRadius: 2,
+                boxShadow:
+                  "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+              }}
             >
-              No {tab} games found for {org.name} {ageGroup}.
-            </Typography>
-          )}
+              <CardContent>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 600, color: "#1e3a8a" }}
+                >
+                  {game.matchup}
+                </Typography>
+                <Typography sx={{ fontSize: "0.9rem" }}>
+                  🏀 <strong>Sport:</strong> {getSportName(game).replace('_', ' ')}
+                </Typography>
+                <Typography sx={{ fontSize: "0.9rem" }}>
+                  📅 <strong>Date:</strong> {formatDate(game.date)}
+                </Typography>
+                <Typography sx={{ fontSize: "0.9rem" }}>
+                  ⏰ <strong>Time:</strong> {formatTime(game.time)}
+                </Typography>
+                <Typography sx={{ fontSize: "0.9rem" }}>
+                  📍{" "}
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      game.location
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: "#2563eb",
+                      textDecoration: "none",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {game.location}
+                  </a>
+                </Typography>
+                {game.notes && (
+                  <Typography
+                    sx={{
+                      fontSize: "0.85rem",
+                      mt: 1,
+                      color: "#4b5563",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    📝 {game.notes}
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       ) : (
         // DESKTOP TABLE VIEW
@@ -202,48 +223,40 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {displayed.length > 0 ? (
-                displayed.map((game) => (
-                  <TableRow
-                    key={game.id}
-                    hover
-                    sx={{
-                      "&:hover": { backgroundColor: "#f9fafb" },
-                      transition: "background 0.2s ease",
-                    }}
-                  >
-                    <TableCell sx={{ minWidth: 120 }}>{game.matchup}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>
-                      {getSportName(game).replace('_', ' ')}
-                    </TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(game.date)}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{formatTime(game.time)}</TableCell>
-                    <TableCell sx={{ minWidth: 140 }}>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          game.location
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          color: "#2563eb",
-                          textDecoration: "none",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {game.location}
-                      </a>
-                    </TableCell>
-                    <TableCell sx={{ minWidth: 200 }}>{game.notes}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
-                    No {tab} games found for {org.name} {ageGroup}.
+              {displayed.map((game) => (
+                <TableRow
+                  key={game.id}
+                  hover
+                  sx={{
+                    "&:hover": { backgroundColor: "#f9fafb" },
+                    transition: "background 0.2s ease",
+                  }}
+                >
+                  <TableCell sx={{ minWidth: 120 }}>{game.matchup}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    {getSportName(game).replace('_', ' ')}
                   </TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(game.date)}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{formatTime(game.time)}</TableCell>
+                  <TableCell sx={{ minWidth: 140 }}>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        game.location
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        color: "#2563eb",
+                        textDecoration: "none",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {game.location}
+                    </a>
+                  </TableCell>
+                  <TableCell sx={{ minWidth: 200 }}>{game.notes}</TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </Box>

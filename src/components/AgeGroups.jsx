@@ -4,7 +4,8 @@ import React from 'react';
 import { ArrowBack } from '@mui/icons-material';
 
 const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
-  console.log("rpinting age groups",ageGroups,org)
+  console.log("AgeGroups component - org:", org, "ageGroups:", ageGroups);
+
   if (!org || !ageGroups || ageGroups.length === 0) {
     return (
       <Box sx={{ p: { xs: 2, md: 4 } }}>
@@ -25,7 +26,7 @@ const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
         </Typography>
         
         <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          No age groups found for {org?.name}.
+          No age groups found for {org?.name}. This organization might not have any active divisions.
         </Typography>
       </Box>
     );
@@ -54,8 +55,8 @@ const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
         {org.name}
       </Typography>
       
-      <Typography variant="h4" sx={{ mb: 1 }}>
-        Game Schedule - {org.name} - 
+      <Typography variant="h6" sx={{ mb: 4, color: 'text.secondary' }}>
+        Select an age group to view available sports and schedules
       </Typography>
 
       <Grid container spacing={3}>
@@ -82,7 +83,7 @@ const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
                   {ageGroup}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                  Age Group
+                  Age Group Division
                 </Typography>
                 <Typography 
                   variant="body2" 
@@ -91,7 +92,7 @@ const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
                     fontWeight: 600 
                   }}
                 >
-                  View Available Sports →
+                  View Sports & Schedules →
                 </Typography>
               </CardActionArea>
             </Card>
@@ -102,13 +103,14 @@ const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
       {/* Additional Information */}
       <Box sx={{ mt: 6, p: 3, backgroundColor: 'background.default', borderRadius: 2 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          About Age Groups
+          About Age Groups & Grades
         </Typography>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Age groups help ensure fair competition by grouping players of similar ages and skill levels together.
+          Age groups ensure fair competition by grouping players of similar ages and skill levels. 
+          Some organizations also use grade-based divisions for school-level competitions.
         </Typography>
         <Typography variant="body1">
-          After selecting an age group, you'll be able to see all available sports for that specific division.
+          After selecting an age group or grade, you'll see all scheduled games and matches for that division.
         </Typography>
       </Box>
     </Box>
