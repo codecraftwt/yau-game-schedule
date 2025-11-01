@@ -29,10 +29,18 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
 
   // Filter games for this organization and age group
   const games = hasMatchStructure ? schedules.filter(game => {
+    const team1Ages = Array.isArray(game.team1.ageGroup)
+      ? game.team1.ageGroup
+      : [game.team1.ageGroup];
+    const team2Ages = Array.isArray(game.team2.ageGroup)
+      ? game.team2.ageGroup
+      : [game.team2.ageGroup];
+
     const isOrgGame = game.team1.orgName === org.name || game.team2.orgName === org.name;
-    const isAgeGroupMatch = game.team1.ageGroup === ageGroup || game.team2.ageGroup === ageGroup;
+    const isAgeGroupMatch = team1Ages.includes(ageGroup) || team2Ages.includes(ageGroup);
     return isOrgGame && isAgeGroupMatch;
   }) : [];
+
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -215,10 +223,10 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
             <TableHead>
               <TableRow>
                 <TableCell>Matchup</TableCell>
-                <TableCell>Sport</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Time</TableCell>
                 <TableCell>Location</TableCell>
+                <TableCell>Sport</TableCell>
                 <TableCell>Special Notes</TableCell>
               </TableRow>
             </TableHead>
@@ -233,9 +241,7 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
                   }}
                 >
                   <TableCell sx={{ minWidth: 120 }}>{game.matchup}</TableCell>
-                  <TableCell sx={{ whiteSpace: "nowrap" }}>
-                    {getSportName(game).replace('_', ' ')}
-                  </TableCell>
+
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(game.date)}</TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{formatTime(game.time)}</TableCell>
                   <TableCell sx={{ minWidth: 140 }}>
@@ -253,6 +259,9 @@ const ScheduleTable = ({ org, ageGroup, onBack, schedules }) => {
                     >
                       {game.location}
                     </a>
+                  </TableCell>
+                                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    {getSportName(game).replace('_', ' ')}
                   </TableCell>
                   <TableCell sx={{ minWidth: 200 }}>{game.notes}</TableCell>
                 </TableRow>

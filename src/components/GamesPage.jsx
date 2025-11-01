@@ -29,7 +29,7 @@ const GamesPage = () => {
         ]);
 
         console.log('Organizations:', orgsResponse);
-        console.log('Schedules:', schedulesResponse);
+        console.log('SchedulesSchedules:Schedules::', schedulesResponse);
 
         if (orgsResponse.success) {
           setOrganizations(orgsResponse.data);
@@ -55,50 +55,65 @@ const GamesPage = () => {
   const org = organizations.find((o) => o.name === selectedOrg);
 
   // Get available age groups for selected organization
-  const getAvailableAgeGroups = () => {
-    if (!selectedOrg || !org || !org.sports) return [];
-    
-    // Collect all unique age groups from all sports in the organization
-    const allAgeGroups = new Set();
-    
-    Object.values(org.sports).forEach(sport => {
-      if (sport.divisions) {
-        sport.divisions.forEach(division => {
-          allAgeGroups.add(division.ageGroup);
-        });
-      }
-    });
-    
-    return Array.from(allAgeGroups).sort();
-  };
+// Get available age groups for selected organization from schedules
+const getAvailableAgeGroups = () => {
+  if (!selectedOrg || !schedules.length) return [];
+
+  const ageGroupSet = new Set();
+
+  schedules.forEach((schedule) => {
+    const { team1, team2 } = schedule;
+
+    // Check if this org appears in team1 or team2
+    if (team1?.orgName === selectedOrg && team1.ageGroup) {
+      const groups = Array.isArray(team1.ageGroup) ? team1.ageGroup : [team1.ageGroup];
+      groups.forEach((g) => ageGroupSet.add(g));
+    }
+
+    if (team2?.orgName === selectedOrg && team2.ageGroup) {
+      const groups = Array.isArray(team2.ageGroup) ? team2.ageGroup : [team2.ageGroup];
+      groups.forEach((g) => ageGroupSet.add(g));
+    }
+  });
+
+  // Return unique sorted age groups
+  return Array.from(ageGroupSet).sort();
+};
+
 
   // Get filtered schedules for table
   const getFilteredSchedules = () => {
     if (!selectedOrg || !selectedAgeGroup) return [];
-    
+
     console.log('Filtering schedules for:', selectedOrg, selectedAgeGroup);
     console.log('All schedules:', schedules);
 
     const filtered = schedules.filter(schedule => {
-      // Check if schedule has the required structure (match data)
-      if (!schedule.team1 || !schedule.team2) {
-        return false;
-      }
+      if (!schedule.team1 || !schedule.team2) return false;
 
-      const team1Match = 
+      // Normalize to arrays (in case API returns string or array)
+      const team1Ages = Array.isArray(schedule.team1.ageGroup)
+        ? schedule.team1.ageGroup
+        : [schedule.team1.ageGroup];
+      const team2Ages = Array.isArray(schedule.team2.ageGroup)
+        ? schedule.team2.ageGroup
+        : [schedule.team2.ageGroup];
+
+      const team1Match =
         schedule.team1.orgName === selectedOrg &&
-        schedule.team1.ageGroup === selectedAgeGroup;
-      
-      const team2Match = 
+        team1Ages.includes(selectedAgeGroup);
+
+      const team2Match =
         schedule.team2.orgName === selectedOrg &&
-        schedule.team2.ageGroup === selectedAgeGroup;
-      
+        team2Ages.includes(selectedAgeGroup);
+
       return team1Match || team2Match;
     });
 
     console.log('Filtered schedules:', filtered);
     return filtered;
   };
+
 
   // Reset when organization changes
   const handleSelectOrg = (orgName) => {

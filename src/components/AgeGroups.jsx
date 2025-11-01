@@ -32,6 +32,10 @@ const AgeGroups = ({ org, ageGroups, onSelectAgeGroup, onBack }) => {
     );
   }
 
+  console.log("Agegroups",{
+    ageGroups,org
+  })
+
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       {/* Back Button and Breadcrumb */}
