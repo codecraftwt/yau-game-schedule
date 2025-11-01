@@ -11,7 +11,7 @@ const HomePage = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-        Welcome to YAU TeamUp
+        Welcome to YAU Game Day Schedule
       </Typography>
       
       <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
